@@ -1,3 +1,6 @@
 [submodule "external/RF24"]
 	path = external/RF24
 	url = https://github.com/nRF24/RF24.git
+[submodule "lib/rf24drone"]
+	path = lib/rf24drone
+	url = https://github.com/SeneAlukard/rf24drone.git
