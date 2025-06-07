@@ -7,23 +7,29 @@
 #include <thread>
 #include <utility>
 
-#define CE_PIN 27
-#define CSN_PIN 10
+#define TX_CE_PIN 27
+#define TX_CSN_PIN 10
+#define RX_CE_PIN 22
+#define RX_CSN_PIN 0
 
 static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1LL;
 static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2LL;
 
 int main() {
-  RadioInterface radio(CE_PIN, CSN_PIN);
-  if (!radio.begin()) {
+  RadioInterface txRadio(TX_CE_PIN, TX_CSN_PIN);
+  RadioInterface rxRadio(RX_CE_PIN, RX_CSN_PIN);
+
+  if (!txRadio.begin() || !rxRadio.begin()) {
     std::cerr << "Radio init failed" << std::endl;
     return 1;
   }
 
-  radio.configure(1, RadioDataRate::MEDIUM_RATE);
-  radio.setAddress(BASE_TX, BASE_RX);
+  txRadio.configure(1, RadioDataRate::MEDIUM_RATE);
+  rxRadio.configure(1, RadioDataRate::MEDIUM_RATE);
+  txRadio.setAddress(BASE_TX, BASE_RX);
+  rxRadio.setAddress(BASE_TX, BASE_RX);
 
-  GroundBaseStation gbs(radio);
+  GroundBaseStation gbs(rxRadio, txRadio);
 
   std::mutex cmd_mutex;
   std::queue<std::pair<DroneIdType, std::string>> cmd_queue;

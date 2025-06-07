@@ -14,7 +14,8 @@ struct GroundDroneInfo {
 
 class GroundBaseStation {
 public:
-  explicit GroundBaseStation(RadioInterface &radio);
+  explicit GroundBaseStation(RadioInterface &radio); // use one radio for both TX and RX
+  GroundBaseStation(RadioInterface &rx_radio, RadioInterface &tx_radio);
 
   void handleIncoming();
   void broadcastCommand(const std::string &cmd);
@@ -23,7 +24,8 @@ public:
   const std::vector<GroundDroneInfo> &getDrones() const { return drones_; }
 
 private:
-  RadioInterface &radio_;
+  RadioInterface &rx_radio_;
+  RadioInterface &tx_radio_;
   std::vector<GroundDroneInfo> drones_;
   mutable std::mutex drones_mutex_;
 
