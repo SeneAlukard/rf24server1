@@ -3,10 +3,12 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <mutex>
 
 GroundBaseStation::GroundBaseStation(RadioInterface &radio) : radio_(radio) {}
 
 void GroundBaseStation::processJoinRequest(const JoinRequestPacket &req) {
+  std::lock_guard<std::mutex> lock(drones_mutex_);
   GroundDroneInfo info{};
   info.id = static_cast<DroneIdType>(drones_.size() + 1);
   info.name = req.requested_name;
@@ -24,6 +26,7 @@ void GroundBaseStation::processJoinRequest(const JoinRequestPacket &req) {
 }
 
 void GroundBaseStation::processTelemetry(const TelemetryPacket &tel) {
+  std::lock_guard<std::mutex> lock(drones_mutex_);
   for (auto &d : drones_) {
     if (d.id == tel.drone_id) {
       d.last_link_quality = tel.link_quality;
@@ -65,8 +68,25 @@ void GroundBaseStation::broadcastCommand(const std::string &cmd) {
   std::strncpy(packet.command, cmd.c_str(), MAX_COMMAND_LENGTH - 1);
   packet.command[MAX_COMMAND_LENGTH - 1] = '\0';
 
+  std::lock_guard<std::mutex> lock(drones_mutex_);
   for (const auto &d : drones_) {
     packet.target_drone_id = d.id;
     radio_.send(&packet, sizeof(packet));
   }
+}
+
+void GroundBaseStation::sendCommandToDrone(DroneIdType id,
+                                           const std::string &cmd) {
+  CommandPacket packet{};
+  packet.timestamp = static_cast<uint32_t>(std::time(nullptr));
+  packet.target_drone_id = id;
+  std::strncpy(packet.command, cmd.c_str(), MAX_COMMAND_LENGTH - 1);
+  packet.command[MAX_COMMAND_LENGTH - 1] = '\0';
+
+  radio_.send(&packet, sizeof(packet));
+}
+
+std::vector<GroundDroneInfo> GroundBaseStation::getDronesSnapshot() const {
+  std::lock_guard<std::mutex> lock(drones_mutex_);
+  return drones_;
 }

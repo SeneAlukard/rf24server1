@@ -2,6 +2,7 @@
 
 #include "packets.hpp"
 #include "radio.hpp"
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -17,11 +18,14 @@ public:
 
   void handleIncoming();
   void broadcastCommand(const std::string &cmd);
+  void sendCommandToDrone(DroneIdType id, const std::string &cmd);
+  std::vector<GroundDroneInfo> getDronesSnapshot() const;
   const std::vector<GroundDroneInfo> &getDrones() const { return drones_; }
 
 private:
   RadioInterface &radio_;
   std::vector<GroundDroneInfo> drones_;
+  mutable std::mutex drones_mutex_;
 
   void processJoinRequest(const JoinRequestPacket &req);
   void processTelemetry(const TelemetryPacket &tel);
