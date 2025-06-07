@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(../external/RF24 external/RF24)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/RF24 external/RF24)
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
     ${CMAKE_SOURCE_DIR}/src/*.cpp
@@ -15,7 +15,7 @@ add_executable(gbs_program ${SRC_FILES})
 
 target_include_directories(gbs_program PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-    ../external/RF24
+    ${CMAKE_SOURCE_DIR}/external/RF24
 )
 
 target_link_libraries(gbs_program PRIVATE rf24)
