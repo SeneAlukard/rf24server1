@@ -12,7 +12,7 @@ RadioInterface::RadioInterface(uint8_t cePin, uint8_t csnPin, uint8_t spiPort)
 bool RadioInterface::begin() {
   if (!radio.begin())
     return false;
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_MAX);
   radio.stopListening();
   return true;
 }
@@ -87,10 +87,6 @@ bool RadioInterface::receive(void *data, size_t size, bool peekOnly) {
   return true;
 }
 
-bool RadioInterface::testRPD() {
-  return radio.testRPD();
-}
+bool RadioInterface::testRPD() { return radio.testRPD(); }
 
-uint8_t RadioInterface::getARC() {
-  return radio.getARC();
-}
+uint8_t RadioInterface::getARC() { return radio.getARC(); }
