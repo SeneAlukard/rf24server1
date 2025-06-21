@@ -10,7 +10,10 @@ set(CMAKE_AUTOUIC ON)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/RF24 external/RF24)
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
+option(BUILD_GUI "Build GUI application" OFF)
+if(BUILD_GUI)
+    find_package(Qt5 REQUIRED COMPONENTS Widgets)
+endif()
 
 set(CLI_SOURCES
     ${CMAKE_SOURCE_DIR}/src/gbs.cpp
@@ -25,19 +28,36 @@ set(GUI_SOURCES
 )
 
 add_executable(gbs_program ${CLI_SOURCES})
-add_executable(gbs_gui ${GUI_SOURCES})
+if(BUILD_GUI)
+    add_executable(gbs_gui ${GUI_SOURCES})
+endif()
 
 target_include_directories(gbs_program PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/external/RF24
 )
-target_include_directories(gbs_gui PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/external/RF24
-)
+if(BUILD_GUI)
+    target_include_directories(gbs_gui PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/external/RF24
+    )
+endif()
 
 target_link_libraries(gbs_program PRIVATE rf24)
-target_link_libraries(gbs_gui PRIVATE rf24 Qt5::Widgets)
+if(BUILD_GUI)
+    target_link_libraries(gbs_gui PRIVATE rf24 Qt5::Widgets)
+endif()
+
+# Simple test to receive telemetry (MPU) data without GUI
+add_executable(mpu_receive_test
+    ${CMAKE_SOURCE_DIR}/tests/mpu_receive_test.cpp
+    ${CMAKE_SOURCE_DIR}/src/radio.cpp)
+
+target_include_directories(mpu_receive_test PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/external/RF24)
+
+target_link_libraries(mpu_receive_test PRIVATE rf24)
 
 add_custom_command(TARGET gbs_program POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -47,5 +67,7 @@ add_custom_command(TARGET gbs_program POST_BUILD
 add_custom_target(run COMMAND gbs_program DEPENDS gbs_program
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-add_custom_target(run_gui COMMAND gbs_gui DEPENDS gbs_gui
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+if(BUILD_GUI)
+    add_custom_target(run_gui COMMAND gbs_gui DEPENDS gbs_gui
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
