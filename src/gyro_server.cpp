@@ -5,6 +5,8 @@
 #include <thread>
 #include <algorithm>
 
+#define TX_CE_PIN 27
+#define TX_CSN_PIN 0
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
 static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1ULL;
@@ -27,14 +29,17 @@ struct GyroData {
 };
 
 int main() {
-  RadioInterface radio(RX_CE_PIN, RX_CSN_PIN);
-  if (!radio.begin()) {
+  RadioInterface txRadio(TX_CE_PIN, TX_CSN_PIN);
+  RadioInterface rxRadio(RX_CE_PIN, RX_CSN_PIN);
+  if (!txRadio.begin() || !rxRadio.begin()) {
     std::cerr << "Radio init failed" << std::endl;
     return 1;
   }
 
-  radio.configure(1, RadioDataRate::MEDIUM_RATE);
-  radio.setAddress(BASE_TX, BASE_RX);
+  txRadio.configure(1, RadioDataRate::MEDIUM_RATE);
+  rxRadio.configure(1, RadioDataRate::MEDIUM_RATE);
+  txRadio.setAddress(BASE_TX, BASE_RX);
+  rxRadio.setAddress(BASE_TX, BASE_RX);
 
   std::unordered_map<uint8_t, GyroData> log;
   uint8_t current_leader = 0;
@@ -43,7 +48,7 @@ int main() {
   std::cout << "Listening for packets..." << std::endl;
   while (true) {
     SimplePacket pkt{};
-    if (radio.receive(&pkt, sizeof(pkt))) {
+    if (rxRadio.receive(&pkt, sizeof(pkt))) {
       GyroData &data = log[pkt.drone_id];
       data.gx = pkt.gyro_x;
       data.gy = pkt.gyro_y;
@@ -77,7 +82,7 @@ int main() {
 
       char msg[32]{};
       std::snprintf(msg, sizeof(msg), "%u Leader = True", current_leader);
-      radio.send(msg, sizeof(msg));
+      txRadio.send(msg, sizeof(msg));
 
       std::cout << "New leader: " << static_cast<int>(current_leader)
                 << std::endl;
