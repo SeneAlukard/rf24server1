@@ -12,8 +12,8 @@
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
 
-static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1LL;
-static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2LL;
+static constexpr uint64_t BASE_TX = 0xF0F0F0F0D2ULL;
+static constexpr uint64_t BASE_RX = 0xF0F0F0F0E1ULL;
 
 int main() {
   RadioInterface txRadio(TX_CE_PIN, TX_CSN_PIN);
