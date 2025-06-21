@@ -1,10 +1,9 @@
 #include "radio.hpp"
-#include <algorithm>
 #include <chrono>
 #include <iostream>
-#include <optional>
-#include <thread>
 #include <unordered_map>
+#include <thread>
+#include <algorithm>
 
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
@@ -12,11 +11,11 @@ static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1ULL;
 static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2ULL;
 
 struct SimplePacket {
-  uint8_t drone_id;
-  int16_t gyro_x;
-  int16_t gyro_y;
-  int16_t gyro_z;
-  bool leader;
+    uint8_t drone_id;
+    int16_t gyro_x;
+    int16_t gyro_y;
+    int16_t gyro_z;
+    bool leader;
 };
 
 struct GyroData {
@@ -38,7 +37,8 @@ int main() {
   radio.setAddress(BASE_TX, BASE_RX);
 
   std::unordered_map<uint8_t, GyroData> log;
-  std::optional<uint8_t> current_leader;
+  uint8_t current_leader = 0;
+  bool have_leader = false;
 
   std::cout << "Listening for packets..." << std::endl;
   while (true) {
@@ -53,30 +53,33 @@ int main() {
 
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
                 << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y << ','
-                << pkt.gyro_z << " Leader: " << std::boolalpha << pkt.leader
+                << pkt.gyro_z
+                << " Leader: " << std::boolalpha << pkt.leader
                 << std::endl;
     }
 
     auto now = std::chrono::steady_clock::now();
-    if (current_leader) {
-      auto it = log.find(*current_leader);
+    if (have_leader) {
+      auto it = log.find(current_leader);
       if (it == log.end() ||
           now - it->second.last_update > std::chrono::seconds(2)) {
-        current_leader.reset();
+        have_leader = false;
       }
     }
-    if (!current_leader && !log.empty()) {
+    if (!have_leader && !log.empty()) {
       auto it = std::max_element(
-          log.begin(), log.end(), [](const auto &a, const auto &b) {
+          log.begin(), log.end(),
+          [](const auto &a, const auto &b) {
             return a.second.last_update < b.second.last_update;
           });
       current_leader = it->first;
+      have_leader = true;
 
       char msg[32]{};
-      std::snprintf(msg, sizeof(msg), "%u Leader = True", *current_leader);
+      std::snprintf(msg, sizeof(msg), "%u Leader = True", current_leader);
       radio.send(msg, sizeof(msg));
 
-      std::cout << "New leader: " << static_cast<int>(*current_leader)
+      std::cout << "New leader: " << static_cast<int>(current_leader)
                 << std::endl;
     }
 
