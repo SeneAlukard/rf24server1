@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <optional>
 #include <thread>
+#include <algorithm>
 
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
