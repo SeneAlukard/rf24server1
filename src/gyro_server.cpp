@@ -1,9 +1,9 @@
 #include "radio.hpp"
+#include <algorithm>
 #include <chrono>
 #include <iostream>
-#include <unordered_map>
 #include <thread>
-#include <algorithm>
+#include <unordered_map>
 
 #define TX_CE_PIN 27
 #define TX_CSN_PIN 0
@@ -14,11 +14,11 @@ static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2ULL;
 static constexpr auto OFFLINE_TIMEOUT = std::chrono::seconds(2);
 
 struct SimplePacket {
-    uint8_t drone_id;
-    int16_t gyro_x;
-    int16_t gyro_y;
-    int16_t gyro_z;
-    bool leader;
+  uint8_t drone_id;
+  int16_t gyro_x;
+  int16_t gyro_y;
+  int16_t gyro_z;
+  bool leader;
 };
 
 struct GyroData {
@@ -63,10 +63,8 @@ int main() {
 
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
                 << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y << ','
-                << pkt.gyro_z
-                << " Leader: " << std::boolalpha << pkt.leader
-                << " RSSI> -64: " << data.strong_signal
-                << std::endl;
+                << pkt.gyro_z << " Leader: " << std::boolalpha << pkt.leader
+                << " RSSI> -64: " << data.strong_signal << std::endl;
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -117,7 +115,7 @@ int main() {
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
   }
 
   return 0;
