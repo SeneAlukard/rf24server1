@@ -71,3 +71,14 @@ if(BUILD_GUI)
     add_custom_target(run_gui COMMAND gbs_gui DEPENDS gbs_gui
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
+
+# Simple server to read gyro data from SimplePacket drones
+add_executable(gyro_server
+    ${CMAKE_SOURCE_DIR}/src/gyro_server.cpp
+    ${CMAKE_SOURCE_DIR}/src/radio.cpp)
+
+target_include_directories(gyro_server PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/external/RF24)
+
+target_link_libraries(gyro_server PRIVATE rf24)
