@@ -11,6 +11,7 @@
 #define RX_CSN_PIN 10
 static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1ULL;
 static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2ULL;
+static constexpr auto OFFLINE_TIMEOUT = std::chrono::seconds(2);
 
 struct SimplePacket {
     uint8_t drone_id;
@@ -27,6 +28,7 @@ struct GyroData {
   bool leader;
   bool strong_signal;
   std::chrono::steady_clock::time_point last_update;
+  bool online = true;
 };
 
 int main() {
@@ -57,6 +59,7 @@ int main() {
       data.leader = pkt.leader;
       data.strong_signal = rxRadio.testRPD();
       data.last_update = std::chrono::steady_clock::now();
+      data.online = true;
 
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
                 << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y << ','
@@ -67,28 +70,49 @@ int main() {
     }
 
     auto now = std::chrono::steady_clock::now();
+
+    for (auto &[id, data] : log) {
+      bool is_online = now - data.last_update <= OFFLINE_TIMEOUT;
+      if (data.online != is_online) {
+        data.online = is_online;
+        std::cout << "Drone " << static_cast<int>(id)
+                  << (is_online ? " online" : " offline") << std::endl;
+      }
+    }
+
     if (have_leader) {
       auto it = log.find(current_leader);
-      if (it == log.end() ||
-          now - it->second.last_update > std::chrono::seconds(2)) {
+      if (it == log.end() || !it->second.online) {
         have_leader = false;
       }
     }
-    if (!have_leader && !log.empty()) {
-      auto it = std::max_element(
-          log.begin(), log.end(),
-          [](const auto &a, const auto &b) {
-            return a.second.last_update < b.second.last_update;
-          });
-      current_leader = it->first;
-      have_leader = true;
 
-      char msg[32]{};
-      std::snprintf(msg, sizeof(msg), "%u Leader = True", current_leader);
-      txRadio.send(msg, sizeof(msg));
+    if (!have_leader) {
+      bool found = false;
+      uint8_t best_id = 0;
+      auto best_time = std::chrono::steady_clock::time_point::min();
+      for (const auto &kv : log) {
+        if (!kv.second.online)
+          continue;
+        if (!found || kv.second.last_update > best_time) {
+          found = true;
+          best_id = kv.first;
+          best_time = kv.second.last_update;
+        }
+      }
+      if (found) {
+        current_leader = best_id;
+        have_leader = true;
 
-      std::cout << "New leader: " << static_cast<int>(current_leader)
-                << std::endl;
+        char msg[32]{};
+        std::snprintf(msg, sizeof(msg), "%u Leader = True", current_leader);
+        txRadio.send(msg, sizeof(msg));
+
+        std::cout << "New leader: " << static_cast<int>(current_leader)
+                  << std::endl;
+      } else {
+        std::cout << "No leader" << std::endl;
+      }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
