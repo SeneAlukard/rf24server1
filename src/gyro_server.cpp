@@ -1,9 +1,10 @@
 #include "radio.hpp"
+#include <algorithm>
 #include <chrono>
 #include <iostream>
-#include <unordered_map>
 #include <optional>
 #include <thread>
+#include <unordered_map>
 
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
@@ -11,11 +12,11 @@ static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1ULL;
 static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2ULL;
 
 struct SimplePacket {
-    uint8_t drone_id;
-    int16_t gyro_x;
-    int16_t gyro_y;
-    int16_t gyro_z;
-    bool leader;
+  uint8_t drone_id;
+  int16_t gyro_x;
+  int16_t gyro_y;
+  int16_t gyro_z;
+  bool leader;
 };
 
 struct GyroData {
@@ -52,8 +53,7 @@ int main() {
 
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
                 << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y << ','
-                << pkt.gyro_z
-                << " Leader: " << std::boolalpha << pkt.leader
+                << pkt.gyro_z << " Leader: " << std::boolalpha << pkt.leader
                 << std::endl;
     }
 
@@ -67,8 +67,7 @@ int main() {
     }
     if (!current_leader && !log.empty()) {
       auto it = std::max_element(
-          log.begin(), log.end(),
-          [](const auto &a, const auto &b) {
+          log.begin(), log.end(), [](const auto &a, const auto &b) {
             return a.second.last_update < b.second.last_update;
           });
       current_leader = it->first;
