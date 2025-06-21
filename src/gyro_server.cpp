@@ -107,8 +107,10 @@ int main() {
         char msg[32]{};
         std::snprintf(msg, sizeof(msg), "%u Leader = True", current_leader);
         txRadio.send(msg, sizeof(msg));
+        uint8_t arc = txRadio.getARC();
 
         std::cout << "New leader: " << static_cast<int>(current_leader)
+                  << " ARC: " << static_cast<int>(arc)
                   << std::endl;
       } else {
         std::cout << "No leader" << std::endl;
