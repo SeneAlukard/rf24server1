@@ -25,6 +25,7 @@ struct GyroData {
   int16_t gy;
   int16_t gz;
   bool leader;
+  bool strong_signal;
   std::chrono::steady_clock::time_point last_update;
 };
 
@@ -54,12 +55,14 @@ int main() {
       data.gy = pkt.gyro_y;
       data.gz = pkt.gyro_z;
       data.leader = pkt.leader;
+      data.strong_signal = rxRadio.testRPD();
       data.last_update = std::chrono::steady_clock::now();
 
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
                 << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y << ','
                 << pkt.gyro_z
                 << " Leader: " << std::boolalpha << pkt.leader
+                << " RSSI> -64: " << data.strong_signal
                 << std::endl;
     }
 
