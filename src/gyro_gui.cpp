@@ -52,9 +52,10 @@ public:
       : QWidget(parent), txRadio_(TX_CE_PIN, TX_CSN_PIN),
         rxRadio_(RX_CE_PIN, RX_CSN_PIN) {
     droneTable_ = new QTableWidget(this);
-    droneTable_->setColumnCount(8);
+    droneTable_->setColumnCount(9);
     QStringList headers = {"Drone", "Accel_X", "Accel_Y", "Accel_Z",
-                           "Gyro_X", "Gyro_Y", "Gyro_Z", "Online"};
+                           "Gyro_X", "Gyro_Y", "Gyro_Z", "Online",
+                           "Leader"};
     droneTable_->setHorizontalHeaderLabels(headers);
     droneTable_->verticalHeader()->setVisible(false);
     droneTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -149,9 +150,18 @@ private slots:
                            new QTableWidgetItem(QString::number(d.gy)));
       droneTable_->setItem(row, 6,
                            new QTableWidgetItem(QString::number(d.gz)));
-      QTableWidgetItem *statusItem = new QTableWidgetItem;
-      statusItem->setBackground(d.online ? Qt::green : Qt::red);
+      QTableWidgetItem *statusItem =
+          new QTableWidgetItem(QString("[%1]")
+                                   .arg(QChar(0x25CF))); // bullet inside []
+      statusItem->setForeground(d.online ? Qt::green : Qt::red);
+      statusItem->setTextAlignment(Qt::AlignCenter);
       droneTable_->setItem(row, 7, statusItem);
+
+      QTableWidgetItem *leaderItem =
+          new QTableWidgetItem(d.leader ? "Yes" : "No");
+      leaderItem->setTextAlignment(Qt::AlignCenter);
+      droneTable_->setItem(row, 8, leaderItem);
+
       ++row;
     }
   }
@@ -170,7 +180,7 @@ private:
 int main(int argc, char **argv) {
   QApplication app(argc, argv);
   GyroServerWindow window;
-  window.resize(900, 400);
+  window.setFixedSize(900, 400);
   window.show();
   return app.exec();
 }
