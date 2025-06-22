@@ -74,22 +74,21 @@ private slots:
   void pollRadio() {
     SimplePacket pkt{};
     if (rxRadio_.receive(&pkt, sizeof(pkt))) {
-      auto &data = drones_[pkt.drone_id];
-      bool firstTime = data.last_update.time_since_epoch().count() == 0;
-      data.ax = pkt.accel_x;
-      data.ay = pkt.accel_y;
-      data.az = pkt.accel_z;
-      data.gx = pkt.gyro_x;
-      data.gy = pkt.gyro_y;
-      data.gz = pkt.gyro_z;
-      data.leader = pkt.leader;
-      data.strong_signal = rxRadio_.testRPD();
-      data.last_update = std::chrono::steady_clock::now();
-      if (firstTime || !data.online) {
-        logArea_->appendPlainText(
-            QString("Drone %1 online").arg(pkt.drone_id));
+      auto &droneData = drones_[pkt.drone_id];
+      bool firstTime = droneData.last_update.time_since_epoch().count() == 0;
+      droneData.ax = pkt.accel_x;
+      droneData.ay = pkt.accel_y;
+      droneData.az = pkt.accel_z;
+      droneData.gx = pkt.gyro_x;
+      droneData.gy = pkt.gyro_y;
+      droneData.gz = pkt.gyro_z;
+      droneData.leader = pkt.leader;
+      droneData.strong_signal = rxRadio_.testRPD();
+      droneData.last_update = std::chrono::steady_clock::now();
+      if (firstTime || !droneData.online) {
+        logArea_->appendPlainText(QString("Drone %1 online").arg(pkt.drone_id));
       }
-      data.online = true;
+      droneData.online = true;
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -97,25 +96,23 @@ private slots:
       bool is_online = now - d.last_update <= OFFLINE_TIMEOUT;
       if (d.online != is_online) {
         d.online = is_online;
-        logArea_->appendPlainText(
-            QString("Drone %1 %2")
-                .arg(id)
-                .arg(is_online ? "online" : "offline"));
+        logArea_->appendPlainText(QString("Drone %1 %2")
+                                      .arg(id)
+                                      .arg(is_online ? "online" : "offline"));
       }
     }
 
     droneList_->clear();
     for (const auto &[id, d] : drones_) {
-      QString item =
-          QString("ID %1 - acc:(%2,%3,%4) gyro:(%5,%6,%7) %8")
-              .arg(id)
-              .arg(d.ax)
-              .arg(d.ay)
-              .arg(d.az)
-              .arg(d.gx)
-              .arg(d.gy)
-              .arg(d.gz)
-              .arg(d.online ? "online" : "offline");
+      QString item = QString("ID %1 - acc:(%2,%3,%4) gyro:(%5,%6,%7) %8")
+                         .arg(id)
+                         .arg(d.ax)
+                         .arg(d.ay)
+                         .arg(d.az)
+                         .arg(d.gx)
+                         .arg(d.gy)
+                         .arg(d.gz)
+                         .arg(d.online ? "online" : "offline");
       droneList_->addItem(item);
     }
   }
@@ -137,4 +134,3 @@ int main(int argc, char **argv) {
   window.show();
   return app.exec();
 }
-
