@@ -59,13 +59,18 @@ public:
     droneTable_->verticalHeader()->setVisible(false);
     droneTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     droneTable_->setSelectionMode(QAbstractItemView::NoSelection);
+    // slightly reduce font size in the table
+    QFont tableFont = droneTable_->font();
+    tableFont.setPointSize(tableFont.pointSize() - 2);
+    droneTable_->setFont(tableFont);
     logArea_ = new QPlainTextEdit(this);
     logArea_->setReadOnly(true);
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(droneTable_);
     layout->addWidget(logArea_);
-    layout->setStretch(0, 2);
-    layout->setStretch(1, 3);
+    // make the drone table slightly larger than the log area
+    layout->setStretch(0, 3);
+    layout->setStretch(1, 2);
     setLayout(layout);
 
     if (!txRadio_.begin() || !rxRadio_.begin()) {
@@ -131,7 +136,7 @@ private slots:
     int row = 0;
     for (const auto &[id, d] : drones_) {
       droneTable_->setItem(row, 0,
-                           new QTableWidgetItem(QString::number(id)));
+                           new QTableWidgetItem(QString("Drone %1").arg(id)));
       droneTable_->setItem(row, 1,
                            new QTableWidgetItem(QString::number(d.ax)));
       droneTable_->setItem(row, 2,
