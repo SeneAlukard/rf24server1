@@ -82,3 +82,15 @@ target_include_directories(gyro_server PRIVATE
     ${CMAKE_SOURCE_DIR}/external/RF24)
 
 target_link_libraries(gyro_server PRIVATE rf24)
+
+if(BUILD_GUI)
+    add_executable(gyro_server_gui
+        ${CMAKE_SOURCE_DIR}/src/gyro_gui.cpp
+        ${CMAKE_SOURCE_DIR}/src/radio.cpp)
+    target_include_directories(gyro_server_gui PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/external/RF24)
+    target_link_libraries(gyro_server_gui PRIVATE rf24 Qt5::Widgets)
+    add_custom_target(run_gyro_gui COMMAND gyro_server_gui DEPENDS gyro_server_gui
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
