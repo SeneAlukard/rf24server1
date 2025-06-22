@@ -29,6 +29,7 @@ struct SimplePacket {
   int16_t gyro_x;
   int16_t gyro_y;
   int16_t gyro_z;
+  int8_t rssi;
   bool leader;
 };
 
@@ -39,6 +40,7 @@ struct GyroData {
   int16_t gx{};
   int16_t gy{};
   int16_t gz{};
+  int8_t rssi{};
   bool leader{};
   bool strong_signal{};
   std::chrono::steady_clock::time_point last_update{};
@@ -52,11 +54,11 @@ public:
       : QWidget(parent), txRadio_(TX_CE_PIN, TX_CSN_PIN),
         rxRadio_(RX_CE_PIN, RX_CSN_PIN) {
     droneTable_ = new QTableWidget(this);
-    droneTable_->setColumnCount(9);
-    QStringList headers = {"Drone", "Accel_X (m/s^2)", "Accel_Y (m/s^2)",
+    droneTable_->setColumnCount(10);
+    QStringList headers = {"Drone",    "Accel_X (m/s^2)", "Accel_Y (m/s^2)",
                            "Accel_Z (m/s^2)", "Gyro_X (dps)",
-                           "Gyro_Y (dps)", "Gyro_Z (dps)", "Online",
-                           "Leader"};
+                           "Gyro_Y (dps)",  "Gyro_Z (dps)",   "RSSI (dBm)",
+                           "Online",       "Leader"};
     droneTable_->setHorizontalHeaderLabels(headers);
     droneTable_->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
@@ -102,6 +104,7 @@ private slots:
       droneData.gx = pkt.gyro_x;
       droneData.gy = pkt.gyro_y;
       droneData.gz = pkt.gyro_z;
+      droneData.rssi = pkt.rssi;
       droneData.leader = pkt.leader;
       droneData.strong_signal = rxRadio_.testRPD();
       droneData.last_update = std::chrono::steady_clock::now();
@@ -185,17 +188,19 @@ private slots:
                            new QTableWidgetItem(QString::number(gy, 'f', 2)));
       droneTable_->setItem(row, 6,
                            new QTableWidgetItem(QString::number(gz, 'f', 2)));
+      droneTable_->setItem(row, 7,
+                           new QTableWidgetItem(QString::number(d.rssi)));
       QTableWidgetItem *statusItem =
           new QTableWidgetItem(QString("[%1]")
                                    .arg(QChar(0x25CF))); // bullet inside []
       statusItem->setForeground(d.online ? Qt::green : Qt::red);
       statusItem->setTextAlignment(Qt::AlignCenter);
-      droneTable_->setItem(row, 7, statusItem);
+      droneTable_->setItem(row, 8, statusItem);
 
       QTableWidgetItem *leaderItem =
           new QTableWidgetItem((d.online && d.leader) ? "Yes" : "No");
       leaderItem->setTextAlignment(Qt::AlignCenter);
-      droneTable_->setItem(row, 8, leaderItem);
+      droneTable_->setItem(row, 9, leaderItem);
 
       ++row;
     }

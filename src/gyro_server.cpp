@@ -22,6 +22,7 @@ struct SimplePacket {
   int16_t gyro_x;
   int16_t gyro_y;
   int16_t gyro_z;
+  int8_t rssi;
   bool leader;
 };
 
@@ -32,6 +33,7 @@ struct GyroData {
   int16_t gx;
   int16_t gy;
   int16_t gz;
+  int8_t rssi;
   bool leader;
   bool strong_signal;
   std::chrono::steady_clock::time_point last_update;
@@ -66,6 +68,7 @@ int main() {
       data.gx = pkt.gyro_x;
       data.gy = pkt.gyro_y;
       data.gz = pkt.gyro_z;
+      data.rssi = pkt.rssi;
       data.leader = pkt.leader;
       data.strong_signal = rxRadio.testRPD();
       data.last_update = std::chrono::steady_clock::now();
@@ -84,6 +87,7 @@ int main() {
                 << " m/s^2) Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y
                 << ',' << pkt.gyro_z << " (" << gx << ',' << gy << ',' << gz
                 << " dps) Leader: " << std::boolalpha << pkt.leader
+                << " RSSI: " << static_cast<int>(data.rssi)
                 << " RSSI> -64: " << data.strong_signal << std::endl;
     }
 
