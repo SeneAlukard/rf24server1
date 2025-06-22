@@ -54,7 +54,9 @@ public:
     logArea_->setReadOnly(true);
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(droneList_);
-    layout->addWidget(logArea_, 1);
+    layout->addWidget(logArea_);
+    layout->setStretch(0, 2);
+    layout->setStretch(1, 3);
     setLayout(layout);
 
     if (!txRadio_.begin() || !rxRadio_.begin()) {
@@ -89,6 +91,13 @@ private slots:
         logArea_->appendPlainText(QString("Drone %1 online").arg(pkt.drone_id));
       }
       droneData.online = true;
+
+      if (pkt.leader && currentLeader_ != pkt.drone_id) {
+        currentLeader_ = pkt.drone_id;
+        logArea_->appendPlainText(QString("New leader %1").arg(pkt.drone_id));
+      } else if (!pkt.leader && currentLeader_ == pkt.drone_id) {
+        currentLeader_ = -1;
+      }
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -99,6 +108,13 @@ private slots:
         logArea_->appendPlainText(QString("Drone %1 %2")
                                       .arg(id)
                                       .arg(is_online ? "online" : "offline"));
+      }
+    }
+
+    if (currentLeader_ != -1) {
+      auto it = drones_.find(static_cast<uint8_t>(currentLeader_));
+      if (it == drones_.end() || !it->second.online) {
+        currentLeader_ = -1;
       }
     }
 
@@ -123,6 +139,7 @@ private:
   RadioInterface txRadio_;
   RadioInterface rxRadio_;
   std::unordered_map<uint8_t, GyroData> drones_;
+  int currentLeader_ = -1;
 };
 
 #include "gyro_gui.moc"
@@ -130,7 +147,7 @@ private:
 int main(int argc, char **argv) {
   QApplication app(argc, argv);
   GyroServerWindow window;
-  window.resize(800, 400);
+  window.resize(900, 400);
   window.show();
   return app.exec();
 }
