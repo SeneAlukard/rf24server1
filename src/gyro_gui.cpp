@@ -1,6 +1,8 @@
 #include <QApplication>
 #include <QHBoxLayout>
-#include <QListWidget>
+#include <QTableWidget>
+#include <QHeaderView>
+#include <QAbstractItemView>
 #include <QPlainTextEdit>
 #include <QTimer>
 #include <QWidget>
@@ -49,11 +51,18 @@ public:
   explicit GyroServerWindow(QWidget *parent = nullptr)
       : QWidget(parent), txRadio_(TX_CE_PIN, TX_CSN_PIN),
         rxRadio_(RX_CE_PIN, RX_CSN_PIN) {
-    droneList_ = new QListWidget(this);
+    droneTable_ = new QTableWidget(this);
+    droneTable_->setColumnCount(8);
+    QStringList headers = {"Drone", "Accel_X", "Accel_Y", "Accel_Z",
+                           "Gyro_X", "Gyro_Y", "Gyro_Z", "Online"};
+    droneTable_->setHorizontalHeaderLabels(headers);
+    droneTable_->verticalHeader()->setVisible(false);
+    droneTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    droneTable_->setSelectionMode(QAbstractItemView::NoSelection);
     logArea_ = new QPlainTextEdit(this);
     logArea_->setReadOnly(true);
     QHBoxLayout *layout = new QHBoxLayout;
-    layout->addWidget(droneList_);
+    layout->addWidget(droneTable_);
     layout->addWidget(logArea_);
     layout->setStretch(0, 2);
     layout->setStretch(1, 3);
@@ -118,23 +127,32 @@ private slots:
       }
     }
 
-    droneList_->clear();
+    droneTable_->setRowCount(static_cast<int>(drones_.size()));
+    int row = 0;
     for (const auto &[id, d] : drones_) {
-      QString item = QString("ID %1 - acc:(%2,%3,%4) gyro:(%5,%6,%7) %8")
-                         .arg(id)
-                         .arg(d.ax)
-                         .arg(d.ay)
-                         .arg(d.az)
-                         .arg(d.gx)
-                         .arg(d.gy)
-                         .arg(d.gz)
-                         .arg(d.online ? "online" : "offline");
-      droneList_->addItem(item);
+      droneTable_->setItem(row, 0,
+                           new QTableWidgetItem(QString::number(id)));
+      droneTable_->setItem(row, 1,
+                           new QTableWidgetItem(QString::number(d.ax)));
+      droneTable_->setItem(row, 2,
+                           new QTableWidgetItem(QString::number(d.ay)));
+      droneTable_->setItem(row, 3,
+                           new QTableWidgetItem(QString::number(d.az)));
+      droneTable_->setItem(row, 4,
+                           new QTableWidgetItem(QString::number(d.gx)));
+      droneTable_->setItem(row, 5,
+                           new QTableWidgetItem(QString::number(d.gy)));
+      droneTable_->setItem(row, 6,
+                           new QTableWidgetItem(QString::number(d.gz)));
+      QTableWidgetItem *statusItem = new QTableWidgetItem;
+      statusItem->setBackground(d.online ? Qt::green : Qt::red);
+      droneTable_->setItem(row, 7, statusItem);
+      ++row;
     }
   }
 
 private:
-  QListWidget *droneList_{};
+  QTableWidget *droneTable_{};
   QPlainTextEdit *logArea_{};
   RadioInterface txRadio_;
   RadioInterface rxRadio_;
