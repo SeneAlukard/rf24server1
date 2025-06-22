@@ -15,6 +15,9 @@ static constexpr auto OFFLINE_TIMEOUT = std::chrono::seconds(2);
 
 struct SimplePacket {
   uint8_t drone_id;
+  int16_t accel_x;
+  int16_t accel_y;
+  int16_t accel_z;
   int16_t gyro_x;
   int16_t gyro_y;
   int16_t gyro_z;
@@ -22,6 +25,9 @@ struct SimplePacket {
 };
 
 struct GyroData {
+  int16_t ax;
+  int16_t ay;
+  int16_t az;
   int16_t gx;
   int16_t gy;
   int16_t gz;
@@ -53,6 +59,9 @@ int main() {
     SimplePacket pkt{};
     if (rxRadio.receive(&pkt, sizeof(pkt))) {
       GyroData &data = log[pkt.drone_id];
+      data.ax = pkt.accel_x;
+      data.ay = pkt.accel_y;
+      data.az = pkt.accel_z;
       data.gx = pkt.gyro_x;
       data.gy = pkt.gyro_y;
       data.gz = pkt.gyro_z;
@@ -62,9 +71,11 @@ int main() {
       data.online = true;
 
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
-                << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y << ','
-                << pkt.gyro_z << " Leader: " << std::boolalpha << pkt.leader
-                << " RSSI> -64: " << data.strong_signal << std::endl;
+                << " Accel: " << pkt.accel_x << ',' << pkt.accel_y << ','
+                << pkt.accel_z << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y
+                << ',' << pkt.gyro_z << " Leader: " << std::boolalpha
+                << pkt.leader << " RSSI> -64: " << data.strong_signal
+                << std::endl;
     }
 
     auto now = std::chrono::steady_clock::now();
