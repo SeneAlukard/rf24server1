@@ -182,7 +182,7 @@ private slots:
       droneTable_->setItem(row, 7, statusItem);
 
       QTableWidgetItem *leaderItem =
-          new QTableWidgetItem(d.leader ? "Yes" : "No");
+          new QTableWidgetItem((d.online && d.leader) ? "Yes" : "No");
       leaderItem->setTextAlignment(Qt::AlignCenter);
       droneTable_->setItem(row, 8, leaderItem);
 
@@ -205,7 +205,7 @@ private:
 int main(int argc, char **argv) {
   QApplication app(argc, argv);
   GyroServerWindow window;
-  window.setFixedSize(900, 400);
+  window.resize(1200, 400);
   window.show();
   return app.exec();
 }
