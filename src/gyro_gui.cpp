@@ -53,10 +53,13 @@ public:
         rxRadio_(RX_CE_PIN, RX_CSN_PIN) {
     droneTable_ = new QTableWidget(this);
     droneTable_->setColumnCount(9);
-    QStringList headers = {"Drone", "Accel_X", "Accel_Y", "Accel_Z",
-                           "Gyro_X", "Gyro_Y", "Gyro_Z", "Online",
+    QStringList headers = {"Drone", "Accel_X (m/s^2)", "Accel_Y (m/s^2)",
+                           "Accel_Z (m/s^2)", "Gyro_X (dps)",
+                           "Gyro_Y (dps)", "Gyro_Z (dps)", "Online",
                            "Leader"};
     droneTable_->setHorizontalHeaderLabels(headers);
+    droneTable_->horizontalHeader()->setSectionResizeMode(
+        QHeaderView::ResizeToContents);
     droneTable_->verticalHeader()->setVisible(false);
     droneTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     droneTable_->setSelectionMode(QAbstractItemView::NoSelection);
@@ -162,18 +165,26 @@ private slots:
     for (const auto &[id, d] : drones_) {
       droneTable_->setItem(row, 0,
                            new QTableWidgetItem(QString("Drone %1").arg(id)));
+
+      float ax = accelRawToMs2(d.ax);
+      float ay = accelRawToMs2(d.ay);
+      float az = accelRawToMs2(d.az);
+      float gx = gyroRawToDps(d.gx);
+      float gy = gyroRawToDps(d.gy);
+      float gz = gyroRawToDps(d.gz);
+
       droneTable_->setItem(row, 1,
-                           new QTableWidgetItem(QString::number(d.ax)));
+                           new QTableWidgetItem(QString::number(ax, 'f', 2)));
       droneTable_->setItem(row, 2,
-                           new QTableWidgetItem(QString::number(d.ay)));
+                           new QTableWidgetItem(QString::number(ay, 'f', 2)));
       droneTable_->setItem(row, 3,
-                           new QTableWidgetItem(QString::number(d.az)));
+                           new QTableWidgetItem(QString::number(az, 'f', 2)));
       droneTable_->setItem(row, 4,
-                           new QTableWidgetItem(QString::number(d.gx)));
+                           new QTableWidgetItem(QString::number(gx, 'f', 2)));
       droneTable_->setItem(row, 5,
-                           new QTableWidgetItem(QString::number(d.gy)));
+                           new QTableWidgetItem(QString::number(gy, 'f', 2)));
       droneTable_->setItem(row, 6,
-                           new QTableWidgetItem(QString::number(d.gz)));
+                           new QTableWidgetItem(QString::number(gz, 'f', 2)));
       QTableWidgetItem *statusItem =
           new QTableWidgetItem(QString("[%1]")
                                    .arg(QChar(0x25CF))); // bullet inside []
@@ -205,7 +216,7 @@ private:
 int main(int argc, char **argv) {
   QApplication app(argc, argv);
   GyroServerWindow window;
-  window.resize(1200, 400);
+  window.resize(1600, 400);
   window.show();
   return app.exec();
 }
