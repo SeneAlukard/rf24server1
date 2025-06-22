@@ -1,4 +1,5 @@
 #include "radio.hpp"
+#include "sensor_utils.hpp"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -70,12 +71,20 @@ int main() {
       data.last_update = std::chrono::steady_clock::now();
       data.online = true;
 
+      float ax = accelRawToMs2(pkt.accel_x);
+      float ay = accelRawToMs2(pkt.accel_y);
+      float az = accelRawToMs2(pkt.accel_z);
+      float gx = gyroRawToDps(pkt.gyro_x);
+      float gy = gyroRawToDps(pkt.gyro_y);
+      float gz = gyroRawToDps(pkt.gyro_z);
+
       std::cout << "ID " << static_cast<int>(pkt.drone_id)
                 << " Accel: " << pkt.accel_x << ',' << pkt.accel_y << ','
-                << pkt.accel_z << " Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y
-                << ',' << pkt.gyro_z << " Leader: " << std::boolalpha
-                << pkt.leader << " RSSI> -64: " << data.strong_signal
-                << std::endl;
+                << pkt.accel_z << " (" << ax << ',' << ay << ',' << az
+                << " m/s^2) Gyro: " << pkt.gyro_x << ',' << pkt.gyro_y
+                << ',' << pkt.gyro_z << " (" << gx << ',' << gy << ',' << gz
+                << " dps) Leader: " << std::boolalpha << pkt.leader
+                << " RSSI> -64: " << data.strong_signal << std::endl;
     }
 
     auto now = std::chrono::steady_clock::now();
