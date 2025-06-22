@@ -108,8 +108,7 @@ int main() {
         uint8_t arc = txRadio.getARC();
 
         std::cout << "New leader: " << static_cast<int>(current_leader)
-                  << " ARC: " << static_cast<int>(arc)
-                  << std::endl;
+                  << " ARC: " << static_cast<int>(arc) << std::endl;
       } else {
         std::cout << "No leader" << std::endl;
       }
