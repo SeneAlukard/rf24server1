@@ -1,5 +1,6 @@
 #include "packets.hpp"
 #include "radio.hpp"
+#include "sensor_utils.hpp"
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -27,10 +28,19 @@ int main() {
         type == PacketType::TELEMETRY) {
       TelemetryPacket packet{};
       if (radio.receive(&packet, sizeof(packet))) {
+        float ax = accelRawToMs2(packet.acceleration_x);
+        float ay = accelRawToMs2(packet.acceleration_y);
+        float az = accelRawToMs2(packet.acceleration_z);
+        float gx = gyroRawToDps(packet.gyroscope_x);
+        float gy = gyroRawToDps(packet.gyroscope_y);
+        float gz = gyroRawToDps(packet.gyroscope_z);
+
         std::cout << "Accel: " << packet.acceleration_x << ','
                   << packet.acceleration_y << ',' << packet.acceleration_z
+                  << " (" << ax << ',' << ay << ',' << az << " m/s^2)"
                   << " Gyro: " << packet.gyroscope_x << ','
                   << packet.gyroscope_y << ',' << packet.gyroscope_z
+                  << " (" << gx << ',' << gy << ',' << gz << " dps)"
                   << " Altitude: " << packet.altitude
                   << " Battery: " << packet.battery_voltage << std::endl;
       }
