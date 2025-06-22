@@ -16,6 +16,7 @@ enum class PacketType : uint8_t {
   LEADER_ANNOUNCEMENT = 6,
   PERMISSION_TO_SEND = 7,
   LEADER_REQUEST = 8,
+  SYNC = 9,
 };
 // ==================== Constants ==================== //
 
@@ -78,6 +79,11 @@ struct PermissionToSendPacket {
   uint32_t timestamp;
 };
 
+struct SyncPacket {
+  PacketType type = PacketType::SYNC;
+  uint32_t timestamp;
+};
+
 struct LeaderRequestPacket {
   PacketType type = PacketType::LEADER_REQUEST;
   DroneIdType drone_id;
@@ -106,3 +112,5 @@ static_assert(sizeof(PermissionToSendPacket) == 6,
 
 static_assert(sizeof(LeaderRequestPacket) == 6,
               "LeaderRequestPacket size mismatch");
+
+static_assert(sizeof(SyncPacket) == 5, "SyncPacket size mismatch");

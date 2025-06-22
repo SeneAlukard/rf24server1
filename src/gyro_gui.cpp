@@ -9,9 +9,11 @@
 
 #include "radio.hpp"
 #include "sensor_utils.hpp"
+#include "packets.hpp"
 
 #include <chrono>
 #include <unordered_map>
+#include <ctime>
 
 #define TX_CE_PIN 27
 #define TX_CSN_PIN 0
@@ -88,6 +90,10 @@ public:
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GyroServerWindow::pollRadio);
     timer->start(250);
+
+    QTimer *syncTimer = new QTimer(this);
+    connect(syncTimer, &QTimer::timeout, this, &GyroServerWindow::sendSync);
+    syncTimer->start(500);
   }
 
 private slots:
@@ -199,6 +205,12 @@ private slots:
 
       ++row;
     }
+  }
+
+  void sendSync() {
+    SyncPacket pkt{};
+    pkt.timestamp = static_cast<uint32_t>(std::time(nullptr));
+    txRadio_.send(&pkt, sizeof(pkt));
   }
 
 private:
