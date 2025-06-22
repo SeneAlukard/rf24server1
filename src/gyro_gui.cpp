@@ -106,13 +106,6 @@ private slots:
         logArea_->appendPlainText(QString("Drone %1 online").arg(pkt.drone_id));
       }
       droneData.online = true;
-
-      if (pkt.leader && currentLeader_ != pkt.drone_id) {
-        currentLeader_ = pkt.drone_id;
-        logArea_->appendPlainText(QString("New leader %1").arg(pkt.drone_id));
-      } else if (!pkt.leader && currentLeader_ == pkt.drone_id) {
-        currentLeader_ = -1;
-      }
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -126,10 +119,41 @@ private slots:
       }
     }
 
-    if (currentLeader_ != -1) {
-      auto it = drones_.find(static_cast<uint8_t>(currentLeader_));
+    if (haveLeader_) {
+      auto it = drones_.find(currentLeader_);
       if (it == drones_.end() || !it->second.online) {
-        currentLeader_ = -1;
+        haveLeader_ = false;
+      }
+    }
+
+    if (!haveLeader_) {
+      bool found = false;
+      uint8_t best_id = 0;
+      auto best_time = std::chrono::steady_clock::time_point::min();
+      for (const auto &kv : drones_) {
+        if (!kv.second.online)
+          continue;
+        if (!found || kv.second.last_update > best_time) {
+          found = true;
+          best_id = kv.first;
+          best_time = kv.second.last_update;
+        }
+      }
+      if (found) {
+        currentLeader_ = best_id;
+        haveLeader_ = true;
+
+        char msg[32]{};
+        std::snprintf(msg, sizeof(msg), "%u Leader = True", currentLeader_);
+        txRadio_.send(msg, sizeof(msg));
+        uint8_t arc = txRadio_.getARC();
+
+        logArea_->appendPlainText(
+            QString("New leader: %1 ARC: %2")
+                .arg(currentLeader_)
+                .arg(arc));
+      } else {
+        logArea_->appendPlainText("No leader");
       }
     }
 
@@ -172,7 +196,8 @@ private:
   RadioInterface txRadio_;
   RadioInterface rxRadio_;
   std::unordered_map<uint8_t, GyroData> drones_;
-  int currentLeader_ = -1;
+  uint8_t currentLeader_ = 0;
+  bool haveLeader_ = false;
 };
 
 #include "gyro_gui.moc"
