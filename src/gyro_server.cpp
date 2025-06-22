@@ -11,8 +11,13 @@
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
 static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1ULL;
-static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2ULL;
+static constexpr uint64_t RX_ADDRESSES[] = {
+    0xF0F0F0F0D2ULL,
+    0xF0F0F0F0D3ULL,
+    0xF0F0F0F0D4ULL,
+};
 static constexpr auto OFFLINE_TIMEOUT = std::chrono::seconds(2);
+static constexpr auto SYNC_INTERVAL = std::chrono::milliseconds(500);
 
 struct SimplePacket {
   uint8_t drone_id;
@@ -48,12 +53,15 @@ int main() {
 
   txRadio.configure(1, RadioDataRate::MEDIUM_RATE);
   rxRadio.configure(1, RadioDataRate::MEDIUM_RATE);
-  txRadio.setAddress(BASE_TX, BASE_RX);
-  rxRadio.setAddress(BASE_TX, BASE_RX);
+  txRadio.setAddress(BASE_TX, RX_ADDRESSES[0]);
+  rxRadio.setAddress(BASE_TX, RX_ADDRESSES[0]);
+  rxRadio.openListeningPipe(2, RX_ADDRESSES[1]);
+  rxRadio.openListeningPipe(3, RX_ADDRESSES[2]);
 
   std::unordered_map<uint8_t, GyroData> log;
   uint8_t current_leader = 0;
   bool have_leader = false;
+  auto last_sync = std::chrono::steady_clock::now();
 
   std::cout << "Listening for packets..." << std::endl;
   while (true) {
@@ -132,6 +140,12 @@ int main() {
       } else {
         std::cout << "No leader" << std::endl;
       }
+    }
+
+    if (now - last_sync >= SYNC_INTERVAL) {
+      const char sync_msg[] = "SYNC";
+      txRadio.send(sync_msg, sizeof(sync_msg) - 1);
+      last_sync = now;
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
