@@ -86,8 +86,8 @@ public:
     if (!txRadio_.begin() || !rxRadio_.begin()) {
       logArea_->appendPlainText("Radio init failed");
     }
-    txRadio_.configure(1, RadioDataRate::LOW_RATE);
-    rxRadio_.configure(1, RadioDataRate::LOW_RATE);
+    txRadio_.configure(1, RadioDataRate::MEDIUM_RATE);
+    rxRadio_.configure(1, RadioDataRate::MEDIUM_RATE);
     txRadio_.setAddress(BASE_TX, RX_PIPELINES[0]);
     rxRadio_.setAddress(BASE_TX, RX_PIPELINES[0]);
     rxRadio_.openListeningPipe(2, RX_PIPELINES[1]);
