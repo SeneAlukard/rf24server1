@@ -90,8 +90,8 @@ public:
     rxRadio_.configure(1, RadioDataRate::LOW_RATE);
     txRadio_.setAddress(BASE_TX, RX_PIPELINES[0]);
     rxRadio_.setAddress(BASE_TX, RX_PIPELINES[0]);
-    rxRadio_.openListeningPipe(RX_PIPELINES[1]);
-    rxRadio_.openListeningPipe(RX_PIPELINES[2]);
+    rxRadio_.openListeningPipe(2, RX_PIPELINES[1]);
+    rxRadio_.openListeningPipe(3, RX_PIPELINES[2]);
 
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GyroServerWindow::pollRadio);
