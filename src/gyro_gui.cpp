@@ -1,9 +1,9 @@
+#include <QAbstractItemView>
 #include <QApplication>
 #include <QHBoxLayout>
-#include <QTableWidget>
 #include <QHeaderView>
-#include <QAbstractItemView>
 #include <QPlainTextEdit>
+#include <QTableWidget>
 #include <QTimer>
 #include <QWidget>
 
@@ -18,8 +18,12 @@
 #define RX_CE_PIN 22
 #define RX_CSN_PIN 10
 static constexpr uint64_t BASE_TX = 0xF0F0F0F0E1ULL;
-static constexpr uint64_t BASE_RX = 0xF0F0F0F0D2ULL;
-static constexpr auto OFFLINE_TIMEOUT = std::chrono::seconds(2);
+static constexpr uint64_t RX_PIPELINES[3] = {
+    0xF0F0F0F0D2ULL,
+    0xF0F0F0F0D3ULL,
+    0xF0F0F0F0D4ULL,
+};
+static constexpr auto OFFLINE_TIMEOUT = std::chrono::seconds(10);
 
 struct SimplePacket {
   uint8_t drone_id;
@@ -55,10 +59,10 @@ public:
         rxRadio_(RX_CE_PIN, RX_CSN_PIN) {
     droneTable_ = new QTableWidget(this);
     droneTable_->setColumnCount(10);
-    QStringList headers = {"Drone",    "Accel_X (m/s^2)", "Accel_Y (m/s^2)",
-                           "Accel_Z (m/s^2)", "Gyro_X (dps)",
-                           "Gyro_Y (dps)",  "Gyro_Z (dps)",   "RSSI (dBm)",
-                           "Online",       "Leader"};
+    QStringList headers = {
+        "Drone",        "Accel_X (m/s^2)", "Accel_Y (m/s^2)", "Accel_Z (m/s^2)",
+        "Gyro_X (dps)", "Gyro_Y (dps)",    "Gyro_Z (dps)",    "RSSI (dBm)",
+        "Online",       "Leader"};
     droneTable_->setHorizontalHeaderLabels(headers);
     droneTable_->horizontalHeader()->setSectionResizeMode(
         QHeaderView::ResizeToContents);
@@ -82,10 +86,12 @@ public:
     if (!txRadio_.begin() || !rxRadio_.begin()) {
       logArea_->appendPlainText("Radio init failed");
     }
-    txRadio_.configure(1, RadioDataRate::MEDIUM_RATE);
-    rxRadio_.configure(1, RadioDataRate::MEDIUM_RATE);
-    txRadio_.setAddress(BASE_TX, BASE_RX);
-    rxRadio_.setAddress(BASE_TX, BASE_RX);
+    txRadio_.configure(1, RadioDataRate::LOW_RATE);
+    rxRadio_.configure(1, RadioDataRate::LOW_RATE);
+    txRadio_.setAddress(BASE_TX, RX_PIPELINES[0]);
+    rxRadio_.setAddress(BASE_TX, RX_PIPELINES[0]);
+    rxRadio_.openListeningPipe(RX_PIPELINES[1]);
+    rxRadio_.openListeningPipe(RX_PIPELINES[2]);
 
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GyroServerWindow::pollRadio);
@@ -155,9 +161,7 @@ private slots:
         uint8_t arc = txRadio_.getARC();
 
         logArea_->appendPlainText(
-            QString("New leader: %1 ARC: %2")
-                .arg(currentLeader_)
-                .arg(arc));
+            QString("New leader: %1 ARC: %2").arg(currentLeader_).arg(arc));
       } else {
         logArea_->appendPlainText("No leader");
       }
@@ -190,9 +194,8 @@ private slots:
                            new QTableWidgetItem(QString::number(gz, 'f', 2)));
       droneTable_->setItem(row, 7,
                            new QTableWidgetItem(QString::number(d.rssi)));
-      QTableWidgetItem *statusItem =
-          new QTableWidgetItem(QString("[%1]")
-                                   .arg(QChar(0x25CF))); // bullet inside []
+      QTableWidgetItem *statusItem = new QTableWidgetItem(
+          QString("[%1]").arg(QChar(0x25CF))); // bullet inside []
       statusItem->setForeground(d.online ? Qt::green : Qt::red);
       statusItem->setTextAlignment(Qt::AlignCenter);
       droneTable_->setItem(row, 8, statusItem);
