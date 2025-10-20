@@ -5,11 +5,14 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <chrono>
 
 struct GroundDroneInfo {
   DroneIdType id{};
   std::string name;
   float last_link_quality = 0.0f;
+  std::chrono::steady_clock::time_point last_update;
+  bool online = true;
 };
 
 class GroundBaseStation {
@@ -27,6 +30,8 @@ private:
   RadioInterface &rx_radio_;
   RadioInterface &tx_radio_;
   std::vector<GroundDroneInfo> drones_;
+  DroneIdType current_leader_ = 0;
+  bool have_leader_ = false;
   mutable std::mutex drones_mutex_;
 
   void processJoinRequest(const JoinRequestPacket &req);
